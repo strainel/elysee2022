@@ -1,0 +1,116 @@
+---
+title: "Vers l'Elysée 2022"
+author: "STR"
+date: "`r format(Sys.time(),'%d %B %Y')`"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    social: menu
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+require("dplyr")
+require("flexdashboard")
+require("highcharter")
+require("viridis")
+parrainage <- read.csv2("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.csv")
+mypics <- read.csv2("photoid.csv")
+options(highcharter.theme = hc_theme_smpl(tooltip = list(valueDecimals = 0)))
+```
+
+Dashboard {data-icon="fa-signal"}
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### parrainages exprimés
+```{r box_nb1}
+valueBox(nrow(parrainage), icon = "ion-chatbubble-working")
+```
+
+### date limite
+```{r box_nb2}
+valueBox("4 mars 2022", icon = "ion-android-stopwatch")
+```
+
+
+### candidats 
+```{r box_nb3}
+valueBox(n_distinct(parrainage$Candidat), icon = "ion-android-contacts")
+```
+
+### candidats ayant 500 parrainages
+```{r box_nb4}
+candidats_nbparrains <- parrainage %>% count(Candidat) %>% arrange(desc(n))
+candidats_order <- candidats_nbparrains %>% select(Candidat)
+candidats_nbparrains_by_date <- parrainage %>% count(Candidat, Date.de.publication)
+candidats_nbparrains_by_date <- left_join(candidats_order,
+                                          candidats_nbparrains_by_date,
+                                  by="Candidat")
+candidats_nbparrains <- left_join(candidats_nbparrains, mypics, by="Candidat")
+candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
+valueBox(candidats_ok, icon = "ion-android-checkbox-outline")
+```
+
+
+### % de parrainages exprimés
+```{r box_nb5}
+valueBox(round(nrow(parrainage)/47000*100, digits = 0), icon = "ion-android-volume-up")
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Parrainages par candidat
+```{r dataviz1}
+cols <- viridis(10, option = "D", direction = -1)
+highchart() %>% 
+  hc_xAxis(categories = candidats_nbparrains$Candidat) %>% 
+  hc_add_series(data = candidats_nbparrains, type = 'column', name="Parrainages",
+                hcaes(x = Candidat, y = n),
+                names = list(enabled = FALSE),
+                dataLabels = list(enabled = TRUE, useHTML = TRUE,
+                                  format='<div style="width: 20px; height: 20px; overflow: hidden; border-radius: 50%"><img src="./images/{point.image}" style="width: 30px; margin-left: -5px; margin-top: -2px"></div>
+')) %>%
+  hc_yAxis(title = list(text = "parrainages reçus"),
+    plotLines = list(
+      list(color = "#ff0000",
+           width = 2,
+           value = 500)
+      )
+  ) %>% 
+  hc_colors(cols)
+```
+
+
+
+Informations {data-icon="ion-information-circled"}
+=======================================================================
+
+### Quelques informations sur ce tableau de bord
+
+Les données sont disponibles [sur le site du Conseil constitutionnel](https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.csv).
+
+#### Participation au parrainage
+
+Selon la [description de la présentation des candidats à l'élection présidentielle](https://fr.wikipedia.org/wiki/Présentation_des_candidats_à_l%27élection_présidentielle_française), le nombre de mandats susceptibles de parrainer un candidat à l'élection présidentielle est d'environ 47 000. Sur cette base, `r scales::percent(nrow(parrainage)/47000) ` des mandats se sont exprimés.
+
+```{r jauge}
+gauge(nrow(parrainage), min = 0, max = 47000, symbol = '', gaugeSectors(
+  success = c(80, 100), warning = c(40, 79), danger = c(0, 39)
+))
+```
+
+#### Hébergement
+
+Le code de ce tableau de bord est hébergé sur la plateforme GitHub.
+La visualisation est hébergée sur Rpubs.
+
+
+#### Crédit
+
+Les photos des candidats sont celles proposées par [les Echos sur sa page](https://www.lesechos.fr/elections/presidentielle/parrainages-ou-en-sont-les-candidats-a-la-presidentielle-1383973).
