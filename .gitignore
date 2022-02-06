@@ -1,0 +1,9 @@
+# Data
+data/
+
+# Fichier Mac
+.DS_Store
+*.icloud
+
+# PYTHON
+__pycache__
