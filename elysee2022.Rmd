@@ -28,23 +28,17 @@ Row
 -----------------------------------------------------------------------
 
 ### parrainages exprimés
-```{r box_nb1}
+```{r box_nb_parrainages}
 valueBox(nrow(parrainage), icon = "ion-chatbubble-working")
 ```
 
-### date limite
-```{r box_nb2}
-valueBox("4 mars 2022", icon = "ion-android-stopwatch")
-```
-
-
 ### candidats 
-```{r box_nb3}
+```{r box_nb_candidats}
 valueBox(n_distinct(parrainage$Candidat), icon = "ion-android-contacts")
 ```
 
 ### candidats ayant 500 parrainages
-```{r box_nb4}
+```{r box_nb_candtdats_sup_500}
 candidats_nbparrains <- parrainage %>% count(Candidat) %>% arrange(desc(n))
 candidats_order <- candidats_nbparrains %>% select(Candidat)
 candidats_nbparrains_by_date <- parrainage %>% count(Candidat, Date.de.publication)
@@ -56,12 +50,15 @@ candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
 valueBox(candidats_ok, icon = "ion-android-checkbox-outline")
 ```
 
-
 ### % de parrainages exprimés
-```{r box_nb5}
+```{r box_tx_parrainage}
 valueBox(round(nrow(parrainage)/47000*100, digits = 0), icon = "ion-android-volume-up")
 ```
 
+### date limite
+```{r box_deadline}
+valueBox("4 mars 22", icon = "ion-android-stopwatch")
+```
 
 Row
 -----------------------------------------------------------------------
@@ -75,7 +72,7 @@ highchart() %>%
                 hcaes(x = Candidat, y = n),
                 names = list(enabled = FALSE),
                 dataLabels = list(enabled = TRUE, useHTML = TRUE,
-                                  format='<div style="width: 20px; height: 20px; overflow: hidden; border-radius: 50%"><img src="https://github.com/strainel/elysee2022/blob/main/images/{point.image}?raw=true" style="width: 30px; margin-left: -5px; margin-top: -2px"></div>
+                                  format='<div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%"><img src="https://github.com/strainel/elysee2022/blob/main/images/{point.image}?raw=true" style="width: 30px; margin-left: 0px; margin-top: -2px"></div>
 ')) %>%
   hc_yAxis(title = list(text = "parrainages reçus"),
     plotLines = list(
