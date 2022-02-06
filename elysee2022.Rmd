@@ -7,6 +7,7 @@ output:
     orientation: rows
     vertical_layout: fill
     social: menu
+    source_code: https://github.com/strainel/elysee2022
 ---
 
 ```{r setup, include=FALSE}
@@ -74,7 +75,7 @@ highchart() %>%
                 hcaes(x = Candidat, y = n),
                 names = list(enabled = FALSE),
                 dataLabels = list(enabled = TRUE, useHTML = TRUE,
-                                  format='<div style="width: 20px; height: 20px; overflow: hidden; border-radius: 50%"><img src="./images/{point.image}" style="width: 30px; margin-left: -5px; margin-top: -2px"></div>
+                                  format='<div style="width: 20px; height: 20px; overflow: hidden; border-radius: 50%"><img src="https://github.com/strainel/elysee2022/blob/main/images/{point.image}?raw=true" style="width: 30px; margin-left: -5px; margin-top: -2px"></div>
 ')) %>%
   hc_yAxis(title = list(text = "parrainages reçus"),
     plotLines = list(

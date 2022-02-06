@@ -7,3 +7,9 @@ data/
 
 # PYTHON
 __pycache__
+
+# R
+rsconnect/
+.Rhistory
+.Rproj.user/
+*.html
