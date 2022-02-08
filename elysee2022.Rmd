@@ -46,6 +46,7 @@ candidats_nbparrains_by_date <- left_join(candidats_order,
                                           candidats_nbparrains_by_date,
                                   by="Candidat")
 candidats_nbparrains <- left_join(candidats_nbparrains, mypics, by="Candidat")
+candidats_nbparrains[is.na(candidats_nbparrains)] <- 'nopic.png'
 candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
 valueBox(candidats_ok, icon = "ion-android-checkbox-outline")
 ```
