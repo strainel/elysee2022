@@ -16,6 +16,7 @@ require("dplyr")
 require("flexdashboard")
 require("highcharter")
 require("viridis")
+require("stringr")
 parrainage <- read.csv2("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.csv")
 mypics <- read.csv2("photoid.csv")
 options(highcharter.theme = hc_theme_smpl(tooltip = list(valueDecimals = 0)))
@@ -47,6 +48,7 @@ candidats_nbparrains_by_date <- left_join(candidats_order,
                                   by="Candidat")
 candidats_nbparrains <- left_join(candidats_nbparrains, mypics, by="Candidat")
 candidats_nbparrains[is.na(candidats_nbparrains)] <- 'nopic.png'
+candidats_nbparrains$n[candidats_nbparrains$n>600] <- 600
 candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
 valueBox(candidats_ok, icon = "ion-android-checkbox-outline")
 ```
@@ -64,18 +66,18 @@ valueBox("4 mars 22", icon = "ion-android-stopwatch")
 Row
 -----------------------------------------------------------------------
 
-### Parrainages par candidat
+### Course au parrainage
 ```{r dataviz1}
 cols <- viridis(10, option = "D", direction = -1)
 highchart() %>% 
   hc_xAxis(categories = candidats_nbparrains$Candidat) %>% 
-  hc_add_series(data = candidats_nbparrains, type = 'column', name="Parrainages",
+  hc_add_series(data = candidats_nbparrains, type = 'column', name="Parrainages (plafond à 600)",
                 hcaes(x = Candidat, y = n),
                 names = list(enabled = FALSE),
                 dataLabels = list(enabled = TRUE, useHTML = TRUE,
                                   format='<div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%"><img src="https://github.com/strainel/elysee2022/blob/main/images/{point.image}?raw=true" style="width: 30px; margin-left: 0px; margin-top: -2px"></div>
 ')) %>%
-  hc_yAxis(title = list(text = "parrainages reçus"),
+  hc_yAxis(title = list(text = "parrainages reçus"), 
     plotLines = list(
       list(color = "#ff0000",
            width = 2,
@@ -86,8 +88,86 @@ highchart() %>%
 ```
 
 
+Profils {data-icon="ion-android-person"}
+=======================================================================
 
-Informations {data-icon="ion-information-circled"}
+Row
+-----------------------------------------------------------------------
+
+### Les maires : principaux parrains
+```{r dataviz2}
+cols <- viridis(10, option = "D", direction = -1)
+type_parrains <- parrainage %>%
+  mutate(Mandat = str_replace(Mandat, "Députée", "Député")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Sénatrice", "Sénateur")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Conseillère métropolitaine", "Conseiller métropolitain")) %>%
+  mutate(Mandat = str_replace(Mandat, "Conseillère départementale", "Conseiller départemental")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Conseillère régionale", "Conseiller régional")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Conseillère", "Conseiller")) %>%  
+  mutate(Mandat = str_replace(Mandat, "Représentante française", "Représentant français")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Maire déléguée", "Maire délégué")) %>% 
+  mutate(Mandat = str_replace(Mandat, "Présidente", "Président")) %>%  
+  count(Mandat) %>% arrange(desc(n))
+highchart() %>% 
+  hc_xAxis(categories = type_parrains$Mandat) %>% 
+  hc_add_series(data = type_parrains, type = 'bar', name="Parrainages",
+                hcaes(x = Mandat, y = n),
+                names = list(enabled = FALSE)) %>%
+  hc_yAxis(title = list(text = "parrainages reçus")) %>% 
+  hc_colors(cols)
+```
+
+### Disparité territoriale
+```{r datamap1}
+refgeo <- read.csv2("ref_codegeo.csv")
+refgeo$`hc-key` <- refgeo$hckey
+
+data <- parrainage %>% count(Département) %>% arrange(desc(n))
+data <- left_join(data,refgeo, by="Département")
+
+hcmap("countries/fr/fr-all-all",
+      data = data,
+      value = "n",
+      joinBy = c("hc-key"),
+      name = "Parrainages",
+      dataLabels = list(enabled = TRUE, format = '{point.nom}'),
+      borderColor = "#FAFAFA", borderWidth = 0.3,
+      tooltip = list(valueDecimals = 0, valuePrefix = "",
+                     valueSuffix = " parrainages"))%>% 
+  hc_mapNavigation(enabled = TRUE) 
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Des femmes mais surtout des hommes
+```{r dataviz3 , out.width = "50%", out.height = "40%"}
+cols <- viridis(10, option = "D", direction = -1)
+type_parrains <- parrainage %>% count(Civilité) %>% arrange(desc(n))
+highchart() %>% 
+  hc_xAxis(categories = type_parrains$Civilité) %>% 
+  hc_add_series(data = type_parrains, type = 'pie', name="Parrainages",
+                hcaes(x = Civilité, y = n),
+                names = list(enabled = FALSE)) %>%
+  hc_yAxis(title = list(text = "parrainages reçus")) %>% 
+  hc_colors(cols)
+```
+
+
+### Dans les temps ?
+```{r dataviz4 , out.width = "50%", out.height = "40%"}
+cols <- viridis(10, option = "D", direction = -1)
+parrainage_by_date <- parrainage %>% count(Date.de.publication)
+highchart() %>% 
+  hc_xAxis(categories = parrainage_by_date$Date.de.publication) %>% 
+  hc_add_series(data = parrainage_by_date, type = 'column', name="Parrainages",
+                hcaes(x = Date.de.publication, y = n),
+                names = list(enabled = FALSE)) %>%
+  hc_yAxis(title = list(text = "parrainages reçus")) %>% 
+  hc_colors(cols)
+```
+
+Info {data-icon="ion-information-circled"}
 =======================================================================
 
 ### Quelques informations sur ce tableau de bord
