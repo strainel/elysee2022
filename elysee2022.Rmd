@@ -20,6 +20,10 @@ require("stringr")
 parrainage <- read.csv2("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.csv")
 mypics <- read.csv2("photoid.csv")
 options(highcharter.theme = hc_theme_smpl(tooltip = list(valueDecimals = 0)))
+
+college <- data.frame(Mandat=c("Député", "Sénateur", "Député européen", "Conseiller régional", "Conseiller départemental","Maire","Conseiller de Paris"),
+                   weight=c(577, 348, 79, 1910, 4108,44000,163))
+
 ```
 
 Dashboard {data-icon="fa-signal"}
@@ -108,12 +112,22 @@ type_parrains <- parrainage %>%
   mutate(Mandat = str_replace(Mandat, "Maire déléguée", "Maire délégué")) %>% 
   mutate(Mandat = str_replace(Mandat, "Présidente", "Président")) %>%  
   count(Mandat) %>% arrange(desc(n))
-highchart() %>% 
+
+type_parrains <- left_join(type_parrains, college, by="Mandat") %>%
+  mutate(pct = n / weight * 100)
+
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Nb")),
+    list(showLastLabel = FALSE, opposite = TRUE, title = list(text = "%"))
+  ) %>% 
   hc_xAxis(categories = type_parrains$Mandat) %>% 
   hc_add_series(data = type_parrains, type = 'bar', name="Parrainages",
                 hcaes(x = Mandat, y = n),
                 names = list(enabled = FALSE)) %>%
-  hc_yAxis(title = list(text = "parrainages reçus")) %>% 
+  hc_add_series(data = type_parrains, type = 'point', name="Taux de participation", yAxis=1,
+                hcaes(x = Mandat, y = pct),
+                names = list(enabled = FALSE)) %>%
   hc_colors(cols)
 ```
 
