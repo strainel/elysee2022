@@ -143,7 +143,9 @@ Row
 ### Des femmes mais surtout des hommes
 ```{r dataviz3 , out.width = "50%", out.height = "40%"}
 cols <- viridis(10, option = "D", direction = -1)
-type_parrains <- parrainage %>% count(Civilité) %>% arrange(desc(n))
+type_parrains <- parrainage %>% count(Civilité) %>% arrange(desc(n)) %>% 
+  mutate(Civilité = str_replace(Civilité, "Mme", "Femme")) %>% 
+  mutate(Civilité = str_replace(Civilité, "M.", "Homme"))
 highchart() %>% 
   hc_xAxis(categories = type_parrains$Civilité) %>% 
   hc_add_series(data = type_parrains, type = 'pie', name="Parrainages",
