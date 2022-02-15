@@ -51,8 +51,9 @@ candidats_nbparrains_by_date <- left_join(candidats_order,
                                           candidats_nbparrains_by_date,
                                   by="Candidat")
 candidats_nbparrains <- left_join(candidats_nbparrains, mypics, by="Candidat")
-candidats_nbparrains[is.na(candidats_nbparrains)] <- 'nopic.png'
-candidats_nbparrains$n[candidats_nbparrains$n>600] <- 600
+candidats_nbparrains$image[is.na(candidats_nbparrains$image)] <- 'nopic.png'
+candidats_nbparrains$n_max600 <- candidats_nbparrains$n
+candidats_nbparrains$n_max600[candidats_nbparrains$n>600] <- 600
 candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
 valueBox(candidats_ok, icon = "ion-android-checkbox-outline")
 ```
@@ -73,10 +74,11 @@ Row
 ### Course au parrainage
 ```{r dataviz1}
 cols <- viridis(10, option = "D", direction = -1)
+filtre <- candidats_nbparrains[candidats_nbparrains$n >= 5, ]
 highchart() %>% 
-  hc_xAxis(categories = candidats_nbparrains$Candidat) %>% 
-  hc_add_series(data = candidats_nbparrains, type = 'column', name="Parrainages (plafond à 600)",
-                hcaes(x = Candidat, y = n),
+  hc_xAxis(categories = filtre$Candidat) %>% 
+  hc_add_series(data = filtre, type = 'column', name="Parrainages (>= 5 et plafond à 600)",
+                hcaes(x = Candidat, y = n_max600),
                 names = list(enabled = FALSE),
                 dataLabels = list(enabled = TRUE, useHTML = TRUE,
                                   format='<div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%"><img src="https://github.com/strainel/elysee2022/blob/main/images/{point.image}?raw=true" style="width: 30px; margin-left: 0px; margin-top: -2px"></div>
@@ -183,6 +185,31 @@ highchart() %>%
   hc_colors(cols)
 ```
 
+
+Parlement {data-icon="ion-pie-graph"}
+=======================================================================
+
+### Répartition des parrainages sur 577 points
+```{r dataviz5 , out.width = "50%", out.height = "40%"}
+nbcolor <- n_distinct(parrainage$Candidat)
+cols <- viridis(nbcolor, option = "D", direction = -1)
+filtre <- candidats_nbparrains %>%
+  mutate(test = round(577 * n / sum(n), digits=0)) %>%
+  arrange(zone)
+highchart() %>% 
+  hc_xAxis(categories = filtre$Candidat) %>% 
+  hc_add_series(data = filtre, type = 'item', name="Parrainages",
+                hcaes(x = Candidat, y = test),
+                names = list(enabled = FALSE),
+                startAngle = -100, endAngle = 100,
+                dataLabels = list(enabled = TRUE, useHTML = TRUE,
+                                  format='{point.label}')) %>%
+  hc_yAxis(title = list(text = "parrainages reçus")) %>% 
+  hc_colors(cols)
+```
+
+
+
 Info {data-icon="ion-information-circled"}
 =======================================================================
 
@@ -209,3 +236,14 @@ La visualisation est hébergée sur Rpubs.
 #### Crédit
 
 Les photos des candidats sont celles proposées par [les Echos sur sa page](https://www.lesechos.fr/elections/presidentielle/parrainages-ou-en-sont-les-candidats-a-la-presidentielle-1383973).
+
+### Liste des candidats
+
+#### Ayant reçu au moins un parrainage
+
+```{r results='asis'}
+candidats_nbparrains <- candidats_nbparrains[order(candidats_nbparrains$Candidat, decreasing = FALSE), ]
+for (i in 1:nrow(candidats_nbparrains)) {
+  cat("* ", candidats_nbparrains$Candidat[i], "\n")
+}
+```
