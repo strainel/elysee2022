@@ -191,11 +191,13 @@ Parlement {data-icon="ion-pie-graph"}
 
 ### Répartition des parrainages sur 577 points
 ```{r dataviz5 , out.width = "50%", out.height = "40%"}
-nbcolor <- n_distinct(parrainage$Candidat)
-cols <- viridis(nbcolor, option = "D", direction = -1)
 filtre <- candidats_nbparrains %>%
   mutate(test = round(577 * n / sum(n), digits=0)) %>%
+  filter(n>=5) %>%
   arrange(zone)
+nbcolor <- n_distinct(filtre$Candidat)
+#cols <- viridis(nbcolor, option = "A", direction = -1)
+cols <- c('#ff1808','#ff1808','#ff1957','#ff1957','#ff2ba3','#ff2ba3','#18ba06','#14e8ff','#26a8ff','#26a8ff','#1239ff','#07155e','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc')
 highchart() %>% 
   hc_xAxis(categories = filtre$Candidat) %>% 
   hc_add_series(data = filtre, type = 'item', name="Parrainages",
