@@ -18,7 +18,7 @@ require("highcharter")
 require("viridis")
 require("stringr")
 parrainage <- read.csv2("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.csv")
-mypics <- read.csv2("photoid.csv")
+mypics <- read.csv2("id_candidat.csv")
 options(highcharter.theme = hc_theme_smpl(tooltip = list(valueDecimals = 0)))
 
 college <- data.frame(Mandat=c("Député", "Sénateur", "Député européen", "Conseiller régional", "Conseiller départemental","Maire","Conseiller de Paris"),
@@ -52,6 +52,8 @@ candidats_nbparrains_by_date <- left_join(candidats_order,
                                   by="Candidat")
 candidats_nbparrains <- left_join(candidats_nbparrains, mypics, by="Candidat")
 candidats_nbparrains$image[is.na(candidats_nbparrains$image)] <- 'nopic.png'
+candidats_nbparrains$color[is.na(candidats_nbparrains$color)] <- '#dcdcdc'
+
 candidats_nbparrains$n_max600 <- candidats_nbparrains$n
 candidats_nbparrains$n_max600[candidats_nbparrains$n>600] <- 600
 candidats_ok <- sum(candidats_nbparrains$n > 500, na.rm=TRUE)
@@ -71,7 +73,7 @@ valueBox("4 mars 22", icon = "ion-android-stopwatch")
 Row
 -----------------------------------------------------------------------
 
-### Course au parrainage
+### Course aux parrainages
 ```{r dataviz1}
 cols <- viridis(10, option = "D", direction = -1)
 filtre <- candidats_nbparrains[candidats_nbparrains$n >= 5, ]
@@ -189,25 +191,22 @@ highchart() %>%
 Parlement {data-icon="ion-pie-graph"}
 =======================================================================
 
-### Répartition des parrainages sur 577 points
+### Répartition des parrainages sur 577 sièges (effectif de l'AN)
 ```{r dataviz5 , out.width = "50%", out.height = "40%"}
 filtre <- candidats_nbparrains %>%
-  mutate(test = round(577 * n / sum(n), digits=0)) %>%
-  filter(n>=5) %>%
+  mutate(proj_an = round(577 * n / sum(n), digits=0)) %>%
+  filter(n>5) %>%
   arrange(zone)
-nbcolor <- n_distinct(filtre$Candidat)
-#cols <- viridis(nbcolor, option = "A", direction = -1)
-cols <- c('#ff1808','#ff1808','#ff1957','#ff1957','#ff2ba3','#ff2ba3','#18ba06','#14e8ff','#26a8ff','#26a8ff','#1239ff','#07155e','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc','#dcdcdc')
 highchart() %>% 
   hc_xAxis(categories = filtre$Candidat) %>% 
   hc_add_series(data = filtre, type = 'item', name="Parrainages",
-                hcaes(x = Candidat, y = test),
+                hcaes(x = Candidat, y = proj_an),
                 names = list(enabled = FALSE),
                 startAngle = -100, endAngle = 100,
                 dataLabels = list(enabled = TRUE, useHTML = TRUE,
                                   format='{point.label}')) %>%
   hc_yAxis(title = list(text = "parrainages reçus")) %>% 
-  hc_colors(cols)
+  hc_colors(filtre$color)
 ```
 
 
@@ -241,11 +240,13 @@ Les photos des candidats sont celles proposées par [les Echos sur sa page](http
 
 ### Liste des candidats
 
-#### Ayant reçu au moins un parrainage
+#### Candidats ayant reçu au moins un parrainage
 
 ```{r results='asis'}
 candidats_nbparrains <- candidats_nbparrains[order(candidats_nbparrains$Candidat, decreasing = FALSE), ]
 for (i in 1:nrow(candidats_nbparrains)) {
-  cat("* ", candidats_nbparrains$Candidat[i], "\n")
+  #cat("* ", candidats_nbparrains$Candidat[i], "\n")
+  if (i < nrow(candidats_nbparrains)) cat(candidats_nbparrains$Candidat[i], ", ")
+  else cat(candidats_nbparrains$Candidat[i])
 }
 ```
